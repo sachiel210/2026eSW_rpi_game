@@ -1,3 +1,5 @@
+# 주석 추가 후 확인
+
 import time, random
 import board, digitalio
 from PIL import Image, ImageDraw
