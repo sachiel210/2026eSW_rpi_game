@@ -5,6 +5,7 @@ from adafruit_rgb_display import st7789
 
 from game_map import GameMap
 from player import Player
+from stages import STAGES
 
 W = H = 240
 FPS = 20
@@ -61,16 +62,13 @@ def read_just_pressed():
     prev = now
     return pressed
 
-# 게임 스테이지
-STAGE = [
-    "P.......",
-    ".###....",
-    ".#......",
-    ".#...###",
-    ".....#.#",
-    ".....#.#",
-    "........",
-]
+def end_turn(cost):
+    global moves, clear, game_over
+    moves -= cost
+    if player.position == game_map.goal:
+        clear = True
+    elif moves <= 0:
+        game_over = True
 
 # 방향 딕셔너리
 DIRECTION = {
@@ -80,28 +78,72 @@ DIRECTION = {
     "RIGHT": (1, 0)
 }
 
-game_map = GameMap(STAGE)
+# 게임 스테이지
+stage = STAGES[0]
+
+# 게임 맵
+game_map = GameMap(stage.layout)
+
+# 게임 플레이어
 player = Player(game_map.player_start)
+
+# 턴 수
+moves = stage.moves
+
+# 클리어, 게임오버
+clear = False
+game_over = False
 
 def render():
     draw.rectangle((0, 0, W - 1, H - 1), fill = (15, 10, 20))
     game_map.draw(draw)
     player.draw(draw, game_map.cell_box)
+
+    draw.text((8, 10), "MOVES " + str(moves), fill = (255, 255, 255))
+
+    # 스테이지 통과, 실패 시 출력
+    if clear:
+        draw.text((100, 10), "CLEAR!", fill = (255, 255, 255))
+    elif game_over:
+        draw.text((100, 10), "FAIL", fill = (255, 255, 255))
+
+    # lcd로 출력 
     disp.image(img)
 
 try:
     render()
     while True:
         for name in read_just_pressed():
-            if name in DIRECTION:
+            if name in DIRECTION and not clear and not game_over:
                 target = player.next_position(DIRECTION[name])
+                cost = 0
+
                 if not game_map.is_wall(target):
                     player.position = target
+                    cost = 1
+
+                if cost > 0:
+                    end_turn(cost)
                     render()
 
+            # B 버튼(위 버튼) 누르면 초기화
+            elif name == "B":
+                # 플레이어 위치 초기화
+                player.position = game_map.player_start
+
+                # 남은 턴 초기화
+                moves = stage.moves
+                
+                # 게임 상태 초기화
+                clear = False
+                game_over = False
+                render()
+
         time.sleep(1 / FPS)
+
 except KeyboardInterrupt:
     pass
+
 finally:
     disp.image(Image.new("RGB", (W, H)))
     backlight.value = False

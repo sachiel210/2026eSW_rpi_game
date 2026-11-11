@@ -19,6 +19,8 @@ class GameMap:
                     self.walls.add((x, y))
                 elif stage[y][x] == "P":
                     self.player_start = (x, y)
+                elif stage[y][x] == "G":
+                    self.goal = (x, y)
 
     def cell_box(self, position, pad = 0):
         # 각 타일의 좌표를 픽셀 위치로 바꿔주는 함수
@@ -47,3 +49,5 @@ class GameMap:
         right = self.origin_x + self.cols * TILE - 1
         bottom = self.origin_y + self.rows * TILE - 1
         draw.rectangle((self.origin_x, self.origin_y, right, bottom), outline=(150, 120, 140), width=2)
+
+        draw.rectangle(self.cell_box(self.goal, 3), outline=(0, 230, 120), width=3)
