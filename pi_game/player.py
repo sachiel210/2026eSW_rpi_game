@@ -1,6 +1,7 @@
 class Player:
     def __init__(self, position):
         self.position = position
+        self.has_key = False
 
     def next_position(self, direction):
         x, y = self.position

@@ -62,14 +62,39 @@ def read_just_pressed():
     prev = now
     return pressed
 
-def end_turn(cost):
+def end_turn(cost, position):
     global moves, clear, game_over
+
+    for ob in obstacles:
+        ob.next_turn()
+        if ob.passable and ob.position == position:
+            cost += ob.step_cost()
+
     moves -= cost
     if player.position == game_map.goal:
         clear = True
     elif moves <= 0:
         game_over = True
 
+# 막힌 공간인지 확인 (바위를 밀어 넣지 못하는 공간)
+def is_blocked(position):
+    if game_map.is_wall(position):
+        return True
+
+    for ob in obstacles:
+        if not ob.passable and ob.position == position:
+            return True
+    if position == game_map.goal:
+        return True
+    return False
+
+# 가는 길에 장애물이 있는지 확인
+def blocking_at(position):
+    for ob in obstacles:
+        if not ob.passable and ob.position == position:
+            return ob
+    return None
+    
 # 방향 딕셔너리
 DIRECTION = {
     "UP": (0, -1),
@@ -81,25 +106,24 @@ DIRECTION = {
 # 게임 스테이지
 stage = STAGES[0]
 
-# 게임 맵
-game_map = GameMap(stage.layout)
-
-# 게임 플레이어
-player = Player(game_map.player_start)
-
-# 턴 수
-moves = stage.moves
-
-# 클리어, 게임오버
-clear = False
-game_over = False
 
 def render():
     draw.rectangle((0, 0, W - 1, H - 1), fill = (15, 10, 20))
     game_map.draw(draw)
-    player.draw(draw, game_map.cell_box)
 
     draw.text((8, 10), "MOVES " + str(moves), fill = (255, 255, 255))
+
+    if player.has_key:
+        game_map.draw_key(draw, (80, 4, 101, 25), (15, 10, 20))
+
+    for ob in obstacles:
+        if ob.passable:
+            ob.draw(draw, game_map.cell_box)
+    for ob in obstacles:
+        if not ob.passable:
+            ob.draw(draw, game_map.cell_box)
+
+    player.draw(draw, game_map.cell_box)
 
     # 스테이지 통과, 실패 시 출력
     if clear:
@@ -110,6 +134,27 @@ def render():
     # lcd로 출력 
     disp.image(img)
 
+def reset():
+    global game_map, obstacles, player, moves, clear, game_over
+
+    # 게임 맵 초기화
+    game_map = GameMap(stage.layout)
+
+    # 장애물 상태 초기화
+    obstacles = game_map.obstacles
+
+    # 플레이어 초기화
+    player = Player(game_map.player_start)
+
+    # 턴 수 초기화
+    moves = stage.moves
+
+    # 게임 클리어 여부 초기화
+    clear = False
+    game_over = False
+
+reset()
+
 try:
     render()
     while True:
@@ -119,24 +164,29 @@ try:
                 cost = 0
 
                 if not game_map.is_wall(target):
-                    player.position = target
-                    cost = 1
+                    ob = blocking_at(target)
+                    if ob:
+                        cost = ob.kick(DIRECTION[name], is_blocked, player)
+                    else:
+                        player.position = target
+                        cost = 1
+                        if target == game_map.key:
+                            player.has_key = True
+                            game_map.key = None
+
+                alive_obstacles = []
+                for ob in obstacles:
+                    if ob.alive:
+                        alive_obstacles.append(ob)
+                obstacles = alive_obstacles
 
                 if cost > 0:
-                    end_turn(cost)
-                    render()
+                    end_turn(cost, player.position)
+                render()
 
             # B 버튼(위 버튼) 누르면 초기화
             elif name == "B":
-                # 플레이어 위치 초기화
-                player.position = game_map.player_start
-
-                # 남은 턴 초기화
-                moves = stage.moves
-                
-                # 게임 상태 초기화
-                clear = False
-                game_over = False
+                reset()
                 render()
 
         time.sleep(1 / FPS)
