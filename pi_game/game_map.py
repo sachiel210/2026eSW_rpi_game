@@ -4,9 +4,7 @@ from obstacles.spike import Spike
 from obstacles.spike import ToggleSpike
 from obstacles.lock import Lock
 
-TILE = 30
-INFO = 30
-SCREEN = 240
+from settings import W, TILE, INFO
 
 class GameMap:
     def __init__(self, stage):
@@ -14,8 +12,8 @@ class GameMap:
         self.cols = len(stage[0]) # 행 길이 (8)
 
         # 맵 좌상단 좌표
-        self.origin_x = (SCREEN - self.cols * TILE) // 2
-        self.origin_y = INFO + (SCREEN - INFO - self.rows * TILE) // 2
+        self.origin_x = (W - self.cols * TILE) // 2
+        self.origin_y = INFO + (W - INFO - self.rows * TILE) // 2
 
         # 벽 집합
         self.walls = set()
