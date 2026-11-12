@@ -20,7 +20,7 @@ class PlayScene(Scene):
 
         # 턴 수 초기화
         self.moves = self.stage.moves
-s
+
         # 게임 클리어 여부 초기화
         self.clear = False
         self.game_over = False
