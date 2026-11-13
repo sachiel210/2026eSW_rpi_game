@@ -1,3 +1,9 @@
+# 한글 폰트
+from PIL import ImageFont
+
+FONT_PATH = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+BOLD_FONT_PATH = "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
+
 # 화면 크기
 W = H = 240
 FPS = 20

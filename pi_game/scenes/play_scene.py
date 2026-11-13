@@ -2,10 +2,12 @@ from scenes.scene import Scene
 from game_map import GameMap
 from player import Player
 from settings import W, H, DIRECTION
+from stages import STAGES
 
 class PlayScene(Scene):
-    def __init__(self, stage):
-        self.stage = stage
+    def __init__(self, index):
+        self.index = index
+        self.stage = STAGES[index]
         self.reset()
 
     def reset(self):
@@ -56,7 +58,14 @@ class PlayScene(Scene):
                 return ob
         return None
 
+    # 게임 루프: 눌린 버튼 확인하고 상황에 맞는 동작
     def handle(self, name):
+        if self.clear and name == "A":
+            if self.index + 1 < len(STAGES):
+                return PlayScene(self.index + 1)
+            else:
+                pass
+
         if name in DIRECTION and not self.clear and not self.game_over:
             target = self.player.next_position(DIRECTION[name])
             cost = 0
